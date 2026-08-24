@@ -1,4 +1,4 @@
-# 🛸 ANTIGRAVITY AUTOMATIC EXECUTION RULES
+# ANTIGRAVITY AUTOMATIC EXECUTION RULES
 
   
 
@@ -6,13 +6,13 @@
 
   
 
-1. **0.CONTROL (코드출력금지, 100%한국어, Pinpoint Edit, Zero Deletion, Pre-Report)** 및 **2.BASE RULES(T0~T2)** 수칙을 100% 자동 적용한다.
+1. **[Auto-Control & Base Rules]**: 0.CONTROL (코드출력금지, 100%한국어, No-Emoji(코드/로그/DB 내 이모지 출력 절대 금지), Pinpoint Edit, Zero Deletion, Pre-Report) 및 2.BASE RULES(T0~T2) 수칙을 100% 자동 적용한다. 특히 기존 파일 수정 시 `write_to_file`(전체 덮어쓰기) 호출을 100% 영구 금지하며, 오직 `replace_file_content`로 지정된 라인만 핀포인트 수정한다.
 
-2. 현재 진행 중인 **PIPELINE 단계(S1~S8)**를 스스로 엄격히 파악한다.
+2. **[Pipeline Self-Diagnosis]**: 현재 진행 중인 PIPELINE 단계(S1~S8)를 스스로 엄격히 파악한다.
 
-3. 해당 단계의 **[3. STAGE EXECUTION 규칙 원문 전문]** 및 **[templates/ 기준 템플릿 문서]**를 단 한 단어도 생략 없이 전수 읽는다.
+3. **[Stage & Template Full-Reading]**: 해당 단계의 [3. STAGE EXECUTION 규칙 원문 전문] 및 [templates/ 기준 템플릿 문서]를 단 한 단어도 생략 없이 전수 읽는다.
 
-4. 각 단계별 원문에 명시된 세부 요구사항(S1: 4대 요소 작성, S2: 하드코딩 금지/.env 분리 질문, S3: Pure Core/Shell 템플릿 격리, S4: T1 포렌식 검증 등)을 토씨 하나 빠짐없이 100% 완수한 후, 오직 사장님이 사전 승인한 작업만 진행한다.
+4. **[Pre-requisite & Approval Gate]**: 각 단계별 원문에 명시된 세부 요구사항(S1: 4대 요소 작성, S2: 하드코딩 금지/.env 분리 질문, S3: Pure Core/Shell 템플릿 격리, S4: T1 포렌식 및 AI 브라우저 자가검증 완료 후 Git 커밋 등)을 토씨 하나 빠짐없이 100% 완수한 후, 오직 사장님이 사전 승인한 작업만 진행한다.
 
 5. **[Proof of Reading]**: 모든 파이프라인 단계 진입 및 코드 수정 전, 반드시 참조한 `templates/` 문서 및 규칙 파일의 읽기 증빙(`view_file` 호출 기록)을 보고서 상단에 명시하라.
 

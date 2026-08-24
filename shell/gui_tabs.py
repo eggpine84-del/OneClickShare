@@ -24,7 +24,7 @@ def build_host_tab(app: Any, parent: ttk.Frame) -> None:
     desc_lbl.pack(anchor="w", pady=(0, 10))
 
     # 프린터 선택 영역
-    p_frame = ttk.LabelFrame(parent, text=" 🖨️ 공유할 프린터 선택 ", padding=10)
+    p_frame = ttk.LabelFrame(parent, text=" [프린터 설정] 공유할 프린터 선택 ", padding=10)
     p_frame.pack(fill=tk.X, pady=5)
 
     app.printer_combo = ttk.Combobox(p_frame, state="readonly", width=50)
@@ -34,7 +34,7 @@ def build_host_tab(app: Any, parent: ttk.Frame) -> None:
     btn_refresh.pack(side=tk.RIGHT)
 
     # 폴더 설정 영역
-    f_frame = ttk.LabelFrame(parent, text=" 📁 공유할 폴더 설정 ", padding=10)
+    f_frame = ttk.LabelFrame(parent, text=" [폴더 설정] 공유할 폴더 설정 ", padding=10)
     f_frame.pack(fill=tk.X, pady=5)
 
     ttk.Label(f_frame, text="폴더 경로:").grid(row=0, column=0, sticky="w", pady=2)
@@ -50,7 +50,7 @@ def build_host_tab(app: Any, parent: ttk.Frame) -> None:
     # 실행 버튼
     btn_start_host = tk.Button(
         parent,
-        text="🚀 내 컴퓨터를 메인으로 원클릭 설정하기",
+        text="▶ 내 컴퓨터를 메인 PC로 설정 시작",
         font=("Malgun Gothic", 12, "bold"),
         bg="#2563eb",
         fg="white",
@@ -75,7 +75,7 @@ def build_client_tab(app: Any, parent: ttk.Frame) -> None:
     desc_lbl.pack(anchor="w", pady=(0, 10))
 
     # 메인 PC 자동 감지 및 선택 영역
-    auto_frame = ttk.LabelFrame(parent, text=" 🔍 사내 메인 PC 자동 감지 ", padding=10)
+    auto_frame = ttk.LabelFrame(parent, text=" [자동 탐색] 사내 메인 PC 감지 ", padding=10)
     auto_frame.pack(fill=tk.X, pady=5)
 
     ttk.Label(auto_frame, text="발견된 메인 PC:").pack(anchor="w", pady=(0, 2))
@@ -96,7 +96,7 @@ def build_client_tab(app: Any, parent: ttk.Frame) -> None:
     btn_rescan.pack(side=tk.RIGHT)
 
     # 수동 주소 입력 영역 (폴백)
-    c_frame = ttk.LabelFrame(parent, text=" 🎯 메인 PC 상세 정보 ", padding=10)
+    c_frame = ttk.LabelFrame(parent, text=" [연결 대상] 메인 PC 상세 정보 ", padding=10)
     c_frame.pack(fill=tk.X, pady=5)
 
     ttk.Label(c_frame, text="메인 PC 이름 또는 IP:").grid(row=0, column=0, sticky="w", pady=4)
@@ -119,7 +119,7 @@ def build_client_tab(app: Any, parent: ttk.Frame) -> None:
     opt_frame.pack(fill=tk.X, pady=5)
 
     app.chk_shortcut_var = tk.BooleanVar(value=True)
-    app.chk_shortcut = ttk.Checkbutton(opt_frame, text="바탕화면에 '📁 회사 공용폴더' 바로가기 생성", variable=app.chk_shortcut_var)
+    app.chk_shortcut = ttk.Checkbutton(opt_frame, text="바탕화면에 '[회사 공용폴더]' 바로가기 생성", variable=app.chk_shortcut_var)
     app.chk_shortcut.pack(anchor="w")
 
     app.chk_drive_var = tk.BooleanVar(value=True)
@@ -129,7 +129,7 @@ def build_client_tab(app: Any, parent: ttk.Frame) -> None:
     # 원클릭 연결 버튼
     btn_start_client = tk.Button(
         parent,
-        text="⚡ 메인 PC 프린터 & 폴더 원클릭 연결하기",
+        text="▶ 메인 PC 프린터 & 폴더 원클릭 연결",
         font=("Malgun Gothic", 12, "bold"),
         bg="#16a34a",
         fg="white",
@@ -155,7 +155,7 @@ def build_diag_tab(app: Any, parent: ttk.Frame) -> None:
 
     btn_run_diag = tk.Button(
         parent,
-        text="🩺 네트워크 & 공유 오류 원클릭 자동 복구하기",
+        text="▶ 네트워크 & 공유 오류 자동 복구 실행",
         font=("Malgun Gothic", 12, "bold"),
         bg="#d97706",
         fg="white",
@@ -181,7 +181,7 @@ def build_unshare_tab(app: Any, parent: ttk.Frame) -> None:
 
     btn_run_unshare = tk.Button(
         parent,
-        text="🧹 이 컴퓨터의 모든 공유 해제 (초기화)",
+        text="▶ 이 컴퓨터의 모든 공유 해제 (초기화)",
         font=("Malgun Gothic", 12, "bold"),
         bg="#dc2626",
         fg="white",

@@ -44,7 +44,7 @@ class OneClickShareApp:
 
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
-        self.root.title("🚀 원클릭 사내 프린터 & 폴더 공유 매니저")
+        self.root.title("원클릭 사내 프린터 & 폴더 공유 매니저")
         self.root.geometry("720x680")
         self.root.minsize(680, 600)
 
@@ -76,13 +76,13 @@ class OneClickShareApp:
 
         title_lbl = ttk.Label(
             top_frame,
-            text="🚀 원클릭 사내 프린터 & 폴더 공유 매니저",
+            text="원클릭 사내 프린터 & 폴더 공유 매니저",
             font=("Malgun Gothic", 14, "bold"),
             foreground="#1e3a8a"
         )
         title_lbl.pack(anchor="w")
 
-        info_text = f"💻 내 컴퓨터 이름: {self.hostname}   |   🌐 내 로컬 IP: {self.local_ip}"
+        info_text = f"[내 PC] 이름: {self.hostname}   |   [IP] {self.local_ip}"
         info_lbl = ttk.Label(top_frame, text=info_text, style="Info.TLabel", foreground="#4b5563")
         info_lbl.pack(anchor="w", pady=(2, 0))
 
@@ -96,10 +96,10 @@ class OneClickShareApp:
         self.tab_diag = ttk.Frame(self.notebook, padding=15)
         self.tab_unshare = ttk.Frame(self.notebook, padding=15)
 
-        self.notebook.add(self.tab_host, text="👑 [메인 PC] 공유 열기")
-        self.notebook.add(self.tab_client, text="👥 [직원 PC] 공유 연결")
-        self.notebook.add(self.tab_diag, text="🩺 원클릭 진단 & 해결")
-        self.notebook.add(self.tab_unshare, text="🧹 공유 해제 (초기화)")
+        self.notebook.add(self.tab_host, text="[메인 PC] 공유 설정")
+        self.notebook.add(self.tab_client, text="[직원 PC] 공유 연결")
+        self.notebook.add(self.tab_diag, text="[자동 진단] 원클릭 복구")
+        self.notebook.add(self.tab_unshare, text="[초기화] 공유 전체 해제")
 
         build_host_tab(self, self.tab_host)
         build_client_tab(self, self.tab_client)
@@ -107,7 +107,7 @@ class OneClickShareApp:
         build_unshare_tab(self, self.tab_unshare)
 
         # 3. 하단 실시간 로그 창
-        log_frame = ttk.LabelFrame(self.root, text=" 📋 작업 진행 로그 ", padding=10)
+        log_frame = ttk.LabelFrame(self.root, text=" [진행 로그] ", padding=10)
         log_frame.pack(fill=tk.BOTH, expand=False, padx=10, pady=(5, 10))
 
         self.log_area = scrolledtext.ScrolledText(
@@ -140,7 +140,7 @@ class OneClickShareApp:
 
     def _action_setup_host(self) -> None:
         """메인 PC 원클릭 설정 동작"""
-        self.log("--- 👑 메인 PC 공유 설정 시작 ---")
+        self.log("--- [메인 PC] 공유 설정 시작 ---")
         self.log("1. 사내 네트워크 프로필을 '개인(Private)'으로 전환 중...")
         _, msg = set_network_profile_private()
         self.log(f"   ➜ {msg}")
@@ -168,13 +168,13 @@ class OneClickShareApp:
             self.log(f"   ➜ {p_msg}")
 
         unc_folder = build_unc_path(self.hostname, share_name)
-        self.log("--- 🎉 메인 PC 설정이 완벽하게 완료되었습니다! ---")
-        self.log(f"📌 직원 PC에서 접속할 주소: {unc_folder} (또는 \\\\{self.local_ip}\\{share_name})")
+        self.log("--- [완료] 메인 PC 설정이 완료되었습니다 ---")
+        self.log(f"[접속 주소] {unc_folder} (또는 \\\\{self.local_ip}\\{share_name})")
         messagebox.showinfo("설정 완료", f"메인 PC 설정이 완료되었습니다!\n\n접속 주소: {unc_folder}\n로컬 IP: {self.local_ip}")
 
     def _auto_scan_main_pc(self) -> None:
         """사내 네트워크에서 공유 중인 메인 PC를 자동 탐색하여 콤보박스에 반영합니다."""
-        self.log("🔍 사내 네트워크의 공유 메인 PC를 자동 탐색 중...")
+        self.log("[탐색] 사내 네트워크의 공유 메인 PC를 탐색 중...")
         found_hosts = scan_network_for_shares(self.local_ip)
         
         display_values: List[str] = []
@@ -188,7 +188,7 @@ class OneClickShareApp:
             self.scanned_host_combo["values"] = display_values
             self.scanned_host_combo.current(0)
             self._on_select_scanned_host(None)
-            self.log(f"✅ 사내 메인 PC 탐색 완료 ({len(found_hosts)}대 발견)")
+            self.log(f"[완료] 사내 메인 PC 탐색 완료 ({len(found_hosts)}대 발견)")
 
         self.root.after(0, update_ui)
 
@@ -210,7 +210,7 @@ class OneClickShareApp:
             messagebox.showwarning("입력 필요", "메인 PC의 컴퓨터 이름 또는 IP 주소를 입력해 주세요.")
             return
 
-        self.log(f"--- 👥 메인 PC({target_host}) 연결 시작 ---")
+        self.log(f"--- [직원 PC] 메인 PC({target_host}) 연결 시작 ---")
         self.log("1. 연결용 레지스트리 및 서비스 준비 중...")
         apply_registry_fixes()
 
@@ -235,16 +235,16 @@ class OneClickShareApp:
             self.log("3. 지정된 프린터명이 없어 폴더 탐색기 실행...")
 
         os.system(f'explorer.exe "{unc_folder}"')
-        self.log("--- 🎉 메인 PC 연결 작업이 완료되었습니다! ---")
+        self.log("--- [완료] 메인 PC 연결 작업이 완료되었습니다 ---")
         messagebox.showinfo("연결 완료", f"메인 PC({target_host}) 연결이 완료되었습니다!\n공용 폴더 창이 열립니다.")
 
     def _action_run_diag(self) -> None:
         """자가 진단 및 자동 복구 동작"""
-        self.log("--- 🩺 원클릭 진단 및 복구 시작 ---")
+        self.log("--- [자동 진단] 원클릭 진단 및 복구 시작 ---")
         set_network_profile_private()
         setup_services_and_firewall()
         apply_registry_fixes()
-        self.log("--- ✅ 모든 공유 설정과 방화벽이 정상 복구되었습니다! ---")
+        self.log("--- [완료] 모든 공유 설정과 방화벽이 정상 복구되었습니다 ---")
         messagebox.showinfo("복구 완료", "네트워크 공유 환경과 레지스트리가 정상 복구되었습니다.")
 
     def _action_run_unshare(self) -> None:
@@ -252,11 +252,11 @@ class OneClickShareApp:
         if not messagebox.askyesno("공유 해제 확인", "정말로 이 컴퓨터의 폴더 및 프린터 공유를 해제하시겠습니까?"):
             return
             
-        self.log("--- 🧹 공유 해제 진행 중 ---")
+        self.log("--- [초기화] 공유 해제 진행 중 ---")
         _, logs = unshare_all(DEFAULT_SHARE_NAME)
         for l in logs:
             self.log(f"   ➜ {l}")
-        self.log("--- ✅ 공유 해제가 완료되었습니다. ---")
+        self.log("--- [완료] 공유 해제가 완료되었습니다 ---")
         messagebox.showinfo("해제 완료", "이 컴퓨터의 공유가 모두 해제되었습니다.")
 
     def _run_in_thread(self, target_func) -> None:
