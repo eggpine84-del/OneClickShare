@@ -1,0 +1,90 @@
+{
+  "_description": "🚀 [실무 필수 9대 MCP 서버 설정 모음집 (Antigravity / Claude Desktop / Cursor 호환)]",
+  "_usage_guide": {
+    "적용_경로": "C:\\Users\\l3afa\\.gemini\\config\\mcp_config.json 또는 프로젝트 루트의 .agents/mcp_config.json",
+    "실행_조건": "Node.js (npx) 또는 Python (uv/python) 설치 환경",
+    "사용_방법": "필요한 서버 블록을 mcpServers 안에 복사하여 사용하세요."
+  },
+  "mcpServers": {
+    "youtube-transcript": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@kimtaeyoon83/mcp-server-youtube-transcript"
+      ],
+      "_comment": "📺 [1] 유튜브 링크 입력 시 1초 만에 전체 자막/대본(타임스탬프 포함) 추출"
+    },
+    "fetch": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-fetch"
+      ],
+      "_comment": "🌐 [2] 웹페이지/블로그/공식문서 고속 마크다운 텍스트 스크랩"
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "c:\\Users\\l3afa\\OneDrive\\Desktop\\coding"
+      ],
+      "_comment": "📁 [3] 로컬 파일/폴더 안전 탐색 및 파일 읽기/쓰기"
+    },
+    "sqlite": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-sqlite",
+        "--db-path",
+        "c:\\Users\\l3afa\\OneDrive\\Desktop\\coding\\20_dashboard\\data\\dashboard.db"
+      ],
+      "_comment": "🗄️ [4] 로컬 SQLite DB 직접 조회, 테이블 구조 파악 및 SQL 실행"
+    },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "YOUR_GITHUB_TOKEN_HERE"
+      },
+      "_comment": "🐙 [5] 깃허브 원격 저장소 코드 검색, 커밋, 이슈, PR 연동"
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-brave-search"
+      ],
+      "env": {
+        "BRAVE_API_KEY": "YOUR_BRAVE_API_KEY_HERE"
+      },
+      "_comment": "🔍 [6] 실시간 최신 정보, 기술 트러블슈팅, 시장 조사 웹 정밀 검색"
+    },
+    "puppeteer": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-puppeteer"
+      ],
+      "_comment": "📸 [7] 동적 웹페이지 렌더링 크롤링, 웹 스크린샷 캡처 및 브라우저 제어"
+    },
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://username:password@localhost:5432/mydb"
+      ],
+      "_comment": "🐘 [8] Railway/Supabase/원격 PostgreSQL DB 직접 쿼리 및 분석"
+    },
+    "memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "_comment": "🧠 [9] 프로젝트 핵심 규칙 및 비즈니스 맥락을 영구 유지하는 지식 그래프 메모리"
+    }
+  }
+}
