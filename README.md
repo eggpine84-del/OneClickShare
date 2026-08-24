@@ -5,6 +5,14 @@
 
 ---
 
+### 📦 [초간단 다운로드 링크]
+* 👉 **[⚡ OneClickShare.exe (실행 파일 바로 다운로드)](https://github.com/eggpine84-del/OneClickShare/raw/main/dist/OneClickShare.exe)**
+* 👉 **[📄 사용설명서.txt 바로보기](https://github.com/eggpine84-del/OneClickShare/blob/main/dist/%EC%82%AC%EC%9A%A9%EC%84%A4%EB%AA%85%EC%84%9C.txt)**
+
+*(※ 별도 설치 없이 다운로드 후 더블 클릭하시면 바로 작동합니다!)*
+
+---
+
 ## ✨ 핵심 기능
 
 1. **👑 [메인 PC] 원클릭 공유 열기**
