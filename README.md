@@ -42,28 +42,6 @@
 
 ---
 
-## 🏛️ 소프트웨어 아키텍처 (FCIS & SRP 준수)
-
-본 프로젝트는 **Functional Core, Imperative Shell (FCIS)** 패턴 및 단일 책임 원칙(SRP)을 100% 준수하여 개발되었습니다:
-
-```
-OneClickShare/
-├── config.py                 # 환경 설정 및 윈도우 네트워크 상수
-├── core/
-│   └── checker.py            # 100% Pure Function 비즈니스 로직 (Side-Effect Zero)
-├── shell/
-│   ├── network_scanner.py    # 멀티스레드 기반 사내 서브넷 고속 병렬 스캐너
-│   ├── printer_adapter.py    # Windows Spooler & PrintUI 연동 어댑터
-│   ├── registry_adapter.py   # UAC 관리자 권한 및 윈도우 10/11 레지스트리 패치
-│   ├── system_adapter.py     # 방화벽, 7대 서비스, SMB 폴더 공유 OS 조율
-│   ├── gui_tabs.py           # 4대 탭 UI 레이아웃 뷰 렌더링
-│   └── gui.py                # Tkinter 메인 컨트롤러 및 비동기 이벤트 루프
-├── main.py                   # 애플리케이션 엔트리포인트
-└── test_core.py              # Core 순수 함수 단위 테스트 (100% Pass)
-```
-
----
-
 ## ⚠️ 보안 권장사항 및 법적 면책 조항 (Security & Disclaimer)
 
 ### 🔒 보안 권장사항
