@@ -176,3 +176,54 @@ def generate_subnet_ip_list(local_ip: str, subnet_mask: str = "255.255.255.0") -
 
     return ip_list
 
+
+def filter_preferred_local_ip(ip_candidates: List[str]) -> str:
+    """
+    여러 네트워크 어댑터 IP 후보 중에서 최적의 사내망 로컬 IPv4 주소를 선별합니다.
+
+    Args:
+        ip_candidates: 검색된 IP 주소 문자열 목록
+
+    Returns:
+        가장 우선순위가 높은 사내망 IPv4 주소 (기본값: '127.0.0.1')
+    """
+    if not ip_candidates:
+        return "127.0.0.1"
+
+    valid_ips: List[str] = []
+    for raw_ip in ip_candidates:
+        ip_str = raw_ip.strip()
+        if not ip_str or ip_str == "127.0.0.1" or ip_str.startswith("169.254."):
+            continue
+        try:
+            ip_obj = ipaddress.IPv4Address(ip_str)
+            if not ip_obj.is_loopback and not ip_obj.is_link_local:
+                valid_ips.append(ip_str)
+        except ValueError:
+            continue
+
+    if not valid_ips:
+        return "127.0.0.1"
+
+    # 우선순위 1: 192.168.x.x (사내 공유망 표준)
+    for ip_str in valid_ips:
+        if ip_str.startswith("192.168."):
+            return ip_str
+
+    # 우선순위 2: 10.x.x.x (사내 대규모망)
+    for ip_str in valid_ips:
+        if ip_str.startswith("10."):
+            return ip_str
+
+    # 우선순위 3: 172.16~31.x.x
+    for ip_str in valid_ips:
+        try:
+            ip_obj = ipaddress.IPv4Address(ip_str)
+            if ip_obj.is_private:
+                return ip_str
+        except ValueError:
+            pass
+
+    # 우선순위 4: 유효한 첫 번째 IP
+    return valid_ips[0]
+

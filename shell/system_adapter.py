@@ -30,7 +30,8 @@ from core.checker import (
     generate_powershell_firewall_command,
     generate_powershell_service_command,
     build_unc_path,
-    is_valid_share_name
+    is_valid_share_name,
+    filter_preferred_local_ip
 )
 from shell.network_scanner import scan_network_for_shares
 from shell.printer_adapter import (
@@ -42,6 +43,12 @@ from shell.registry_adapter import (
     is_admin,
     run_as_admin,
     apply_registry_fixes
+)
+from shell.folder_adapter import (
+    create_folder_share,
+    create_desktop_shortcut,
+    map_network_drive,
+    unshare_all
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -114,9 +121,9 @@ def setup_services_and_firewall() -> Tuple[bool, List[str]]:
         cmd = generate_powershell_service_command(svc_name)
         success, out = execute_powershell(cmd)
         if success:
-            logs.append(f"✅ 서비스 가동 완료: {svc_name} ({desc})")
+            logs.append(f"[완료] 서비스 가동: {svc_name} ({desc})")
         else:
-            logs.append(f"⚠️ 서비스 가동 주의: {svc_name} ({desc})")
+            logs.append(f"[주의] 서비스 가동 주의: {svc_name} ({desc})")
 
     # 2. 방화벽 기본 규칙 그룹 활성화
     enable_group_cmd = (
@@ -129,7 +136,7 @@ def setup_services_and_firewall() -> Tuple[bool, List[str]]:
     for proto, port, desc in REQUIRED_PORTS:
         fw_cmd = generate_powershell_firewall_command(FIREWALL_RULE_PREFIX, proto, port)
         execute_powershell(fw_cmd)
-        logs.append(f"✅ 방화벽 포트 개방: {proto} {port} ({desc})")
+        logs.append(f"[완료] 방화벽 포트 개방: {proto} {port} ({desc})")
 
     return all_success, logs
 
@@ -140,40 +147,7 @@ def setup_services_and_firewall() -> Tuple[bool, List[str]]:
 
 
 
-def create_folder_share(folder_path: str = DEFAULT_SHARE_FOLDER_PATH, share_name: str = DEFAULT_SHARE_NAME) -> Tuple[bool, str]:
-    """
-    지정한 폴더를 생성하고, Everyone 읽기/쓰기 권한으로 SMB 공유를 생성합니다.
 
-    Args:
-        folder_path: 공유할 로컬 폴더 경로
-        share_name: SMB 공유 이름
-
-    Returns:
-        (성공 여부 bool, 메시지)
-    """
-    try:
-        # 폴더 생성
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path, exist_ok=True)
-
-        # NTFS 권한 부여 (Everyone에 모든 권한)
-        icacls_cmd = f'icacls "{folder_path}" /grant "Everyone:(OI)(CI)F" /T /C /Q'
-        subprocess.run(icacls_cmd, shell=True, capture_output=True)
-
-        # SMB 공유 생성 (기존 공유가 있으면 삭제 후 재생성)
-        remove_share_cmd = f'Remove-SmbShare -Name "{share_name}" -Force -ErrorAction SilentlyContinue'
-        execute_powershell(remove_share_cmd)
-
-        add_share_cmd = (
-            f'New-SmbShare -Name "{share_name}" -Path "{folder_path}" '
-            f'-FullAccess "Everyone" -ErrorAction Stop'
-        )
-        success, out = execute_powershell(add_share_cmd)
-        if success:
-            return True, f"폴더 '{folder_path}'이(가) 공유명 '{share_name}'으로 성공적으로 등록되었습니다."
-        return False, f"SMB 폴더 공유 등록 실패: {out}"
-    except Exception as e:
-        return False, f"공유 폴더 처리 중 오류 발생: {e}"
 
 
 def get_local_ip_and_hostname() -> Tuple[str, str]:
@@ -184,105 +158,53 @@ def get_local_ip_and_hostname() -> Tuple[str, str]:
         (호스트이름, IP주소)
     """
     hostname = socket.gethostname()
-    local_ip = "127.0.0.1"
+    candidates: List[str] = []
+
+    # 1. 외부 라우팅 기반 소켓 IP 수집
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        # 외부 연결 시도를 통해 실제 라우팅되는 로컬 IP 추출
         s.connect(("8.8.8.8", 80))
-        local_ip = s.getsockname()[0]
+        sock_ip = s.getsockname()[0]
         s.close()
+        if sock_ip:
+            candidates.append(sock_ip)
     except Exception:
-        try:
-            local_ip = socket.gethostbyname(hostname)
-        except Exception:
-            local_ip = "127.0.0.1"
+        pass
+
+    # 2. 호스트명 기반 전체 인터페이스 IP 수집
+    try:
+        _, _, ip_list = socket.gethostbyname_ex(hostname)
+        candidates.extend(ip_list)
+    except Exception:
+        pass
+
+    # 3. Pure Core 함수를 통한 최적 사내망 IP 선별
+    local_ip = filter_preferred_local_ip(candidates)
     return hostname, local_ip
 
 
-def create_desktop_shortcut(target_path: str, shortcut_name: str = DESKTOP_SHORTCUT_NAME) -> Tuple[bool, str]:
+def safe_copy_to_clipboard(root: Any, text: str) -> bool:
     """
-    바탕화면에 지정된 네트워크 폴더 UNC 경로를 가리키는 바로가기(.lnk)를 생성합니다.
+    Tkinter 클립보드에 문자열을 안전하게 복사합니다.
 
     Args:
-        target_path: 바로가기가 가리킬 UNC 경로 (예: \\192.168.0.10\CompanyShare)
-        shortcut_name: 바로가기 파일명
+        root: Tkinter root 객체
+        text: 클립보드에 복사할 문자열
 
     Returns:
-        (성공 여부 bool, 메시지)
+        성공 여부 bool
     """
+    if not text:
+        return False
     try:
-        desktop_dir = os.path.join(os.path.expanduser("~"), "Desktop")
-        if not os.path.exists(desktop_dir):
-            # 한글 윈도우 바탕화면 경로 폴백
-            desktop_dir = os.path.join(os.environ.get("USERPROFILE", ""), "바탕 화면")
-
-        shortcut_file = os.path.join(desktop_dir, shortcut_name)
-        
-        vbs_cmd = (
-            f'$ws = New-Object -ComObject WScript.Shell; '
-            f'$s = $ws.CreateShortcut("{shortcut_file}"); '
-            f'$s.TargetPath = "{target_path}"; '
-            f'$s.IconLocation = "explorer.exe,0"; '
-            f'$s.Save()'
-        )
-        success, out = execute_powershell(vbs_cmd)
-        if success:
-            return True, f"바탕화면에 '{shortcut_name}' 바로가기가 생성되었습니다."
-        return False, f"바로가기 생성 실패: {out}"
+        root.clipboard_clear()
+        root.clipboard_append(text)
+        root.update()
+        return True
     except Exception as e:
-        return False, f"바로가기 생성 중 예외: {e}"
-
-
-def map_network_drive(unc_path: str, drive_letter: str = DEFAULT_NETWORK_DRIVE_LETTER) -> Tuple[bool, str]:
-    """
-    지정된 UNC 경로를 네트워크 드라이브(Z:)로 마운트합니다.
-
-    Args:
-        unc_path: 공유 폴더 UNC 경로
-        drive_letter: 드라이브 문자 (예: 'Z:')
-
-    Returns:
-        (성공 여부 bool, 메시지)
-    """
-    try:
-        # 기존 드라이브 연결 해제
-        disconnect_cmd = f"net use {drive_letter} /delete /y"
-        subprocess.run(disconnect_cmd, shell=True, capture_output=True)
-
-        # 새 드라이브 연결
-        connect_cmd = f'net use {drive_letter} "{unc_path}" /persistent:yes'
-        res = subprocess.run(connect_cmd, shell=True, capture_output=True, text=True)
-        if res.returncode == 0:
-            return True, f"네트워크 드라이브({drive_letter})로 정상 연결되었습니다."
-        return False, f"네트워크 드라이브 연결 실패: {res.stderr.strip()}"
-    except Exception as e:
-        return False, f"네트워크 드라이브 매핑 중 오류: {e}"
+        logger.warning(f"클립보드 복사 예외: {e}")
+        return False
 
 
 
-
-
-def unshare_all(share_name: str = DEFAULT_SHARE_NAME) -> Tuple[bool, List[str]]:
-    """
-    현재 컴퓨터의 SMB 폴더 공유를 닫고 모든 프린터의 공유 속성을 해제합니다.
-
-    Returns:
-        (성공 여부 bool, 로그 목록)
-    """
-    logs: List[str] = []
-    
-    # 1. SMB 폴더 공유 삭제
-    rm_cmd = f'Remove-SmbShare -Name "{share_name}" -Force -ErrorAction SilentlyContinue'
-    execute_powershell(rm_cmd)
-    logs.append(f"✅ 폴더 공유('{share_name}') 해제 완료")
-
-    # 2. 모든 프린터 공유 해제
-    printers = get_local_printers()
-    for p_name, is_shared in printers:
-        if is_shared:
-            unshare_cmd = f'Set-Printer -Name "{p_name}" -Shared $false -ErrorAction SilentlyContinue'
-            execute_powershell(unshare_cmd)
-            logs.append(f"✅ 프린터 '{p_name}' 공유 해제 완료")
-
-    return True, logs
 

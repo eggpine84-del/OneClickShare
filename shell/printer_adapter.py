@@ -74,6 +74,7 @@ def share_printer(printer_name: str, share_name: Optional[str] = None) -> Tuple[
 def connect_remote_printer(host: str, printer_share_name: str) -> Tuple[bool, str]:
     """
     원격 호스트의 공유 프린터를 로컬 컴퓨터에 연결 및 등록합니다.
+    PowerShell Add-Printer를 1순위로 실행하고 WScript.Network를 2순위 방어선으로 가동합니다.
 
     Args:
         host: 원격 호스트 이름 또는 IP
@@ -86,18 +87,71 @@ def connect_remote_printer(host: str, printer_share_name: str) -> Tuple[bool, st
     if not unc:
         return False, "올바르지 않은 프린터 공유 경로입니다."
 
-    # Windows PrintUI를 통한 원격 프린터 연결
-    cmd = f'rundll32 printui.dll,PrintUIEntry /in /n"{unc}"'
+    # 1. PowerShell Add-Printer 1순위 다이렉트 연결 (최신 윈도우 10/11 표준)
+    ps_cmd = f"Add-Printer -ConnectionName '{unc}' -ErrorAction Stop"
+    success, out = execute_powershell(ps_cmd)
+    if success:
+        return True, f"공유 프린터('{unc}')가 성공적으로 등록되었습니다."
+
+    # 2. WScript.Network 2차 방어선 시도
+    vbs_cmd = f"(New-Object -ComObject WScript.Network).AddWindowsPrinterConnection('{unc}')"
+    success_vbs, out_vbs = execute_powershell(vbs_cmd)
+    if success_vbs:
+        return True, f"공유 프린터('{unc}')가 WScript 연결로 등록되었습니다."
+
+    # 3. PrintUI 3차 폴백 시도
     try:
-        res = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=20)
+        cmd = f'rundll32 printui.dll,PrintUIEntry /in /n"{unc}"'
+        res = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=15)
         if res.returncode == 0:
-            return True, f"공유 프린터('{unc}') 연결이 완료되었습니다."
-        
-        # PowerShell Fallback 시도
-        ps_cmd = f'Add-Printer -ConnectionName "{unc}" -ErrorAction Stop'
-        success, out = execute_powershell(ps_cmd)
-        if success:
-            return True, f"공유 프린터('{unc}')가 등록되었습니다."
-        return False, f"프린터 연결 실패 ({unc}): {out or res.stderr}"
-    except Exception as e:
-        return False, f"프린터 연결 중 예외 발생: {e}"
+            return True, f"공유 프린터('{unc}') PrintUI 연결 요청 완료"
+    except Exception:
+        pass
+
+    return False, f"프린터 연결 실패 ({unc}): {out or out_vbs}"
+
+
+def get_remote_shared_printers(host_ip: str) -> List[str]:
+    """
+    원격 메인 PC에 공유되어 있는 프린터 목록을 조회합니다.
+
+    Args:
+        host_ip: 원격 메인 PC IP 주소 또는 호스트명
+
+    Returns:
+        공유된 프린터 이름 리스트
+    """
+    if not host_ip or host_ip == "127.0.0.1":
+        return []
+
+    printers: List[str] = []
+
+    # 1. PowerShell 원격 프린터 쿼리 시도
+    ps_cmd = f"Get-Printer -ComputerName '{host_ip}' -ErrorAction SilentlyContinue | Where-Object {{ $_.Shared -eq $true }} | ForEach-Object {{ $_.ShareName }}"
+    success, out = execute_powershell(ps_cmd)
+    if success and out:
+        for line in out.splitlines():
+            line_str = line.strip()
+            if line_str and line_str not in printers:
+                printers.append(line_str)
+
+    if printers:
+        return printers
+
+    # 2. net view 폴백 시도
+    try:
+        net_cmd = f'net view "{host_ip}"'
+        res = subprocess.run(net_cmd, shell=True, capture_output=True, text=True, timeout=5)
+        if res.returncode == 0:
+            for line in res.stdout.splitlines():
+                if "인쇄" in line or "Print" in line:
+                    parts = line.split()
+                    if parts:
+                        p_name = parts[0].strip()
+                        if p_name and p_name not in printers:
+                            printers.append(p_name)
+    except Exception:
+        pass
+
+    return printers
+

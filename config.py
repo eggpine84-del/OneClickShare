@@ -61,3 +61,9 @@ RPC_AUTHN_DEFAULT_VALUE: int = 0
 LANMAN_WORKSTATION_REG_PATH: str = r"System\CurrentControlSet\Services\LanmanWorkstation\Parameters"
 LANMAN_INSECURE_GUEST_KEY: str = "AllowInsecureGuestAuth"
 LANMAN_INSECURE_GUEST_VALUE: int = 1
+
+# Point and Print 드라이버 설치 관리자 제한 완화 패치 (0x0000007c 방지)
+POINT_AND_PRINT_REG_PATH: str = r"SOFTWARE\Policies\Microsoft\Windows NT\Printers\PointAndPrint"
+POINT_AND_PRINT_RESTRICT_KEY: str = "RestrictDriverInstallationToAdministrators"
+POINT_AND_PRINT_RESTRICT_VALUE: int = 0
+

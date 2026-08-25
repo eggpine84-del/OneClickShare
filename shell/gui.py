@@ -27,14 +27,17 @@ from shell.system_adapter import (
     map_network_drive,
     connect_remote_printer,
     unshare_all,
-    scan_network_for_shares
+    scan_network_for_shares,
+    safe_copy_to_clipboard
 )
+from shell.printer_adapter import get_remote_shared_printers
 from shell.gui_tabs import (
     build_host_tab,
     build_client_tab,
     build_diag_tab,
     build_unshare_tab
 )
+from shell.gui_banner import build_top_banner_card
 
 
 class OneClickShareApp:
@@ -70,21 +73,8 @@ class OneClickShareApp:
 
     def _build_ui(self) -> None:
         """전체 UI 레이아웃을 생성합니다."""
-        # 1. 상단 내 컴퓨터 정보 배너
-        top_frame = ttk.Frame(self.root, padding=10)
-        top_frame.pack(fill=tk.X)
-
-        title_lbl = ttk.Label(
-            top_frame,
-            text="원클릭 사내 프린터 & 폴더 공유 매니저",
-            font=("Malgun Gothic", 14, "bold"),
-            foreground="#1e3a8a"
-        )
-        title_lbl.pack(anchor="w")
-
-        info_text = f"[내 PC] 이름: {self.hostname}   |   [IP] {self.local_ip}"
-        info_lbl = ttk.Label(top_frame, text=info_text, style="Info.TLabel", foreground="#4b5563")
-        info_lbl.pack(anchor="w", pady=(2, 0))
+        # 1. 상단 내 컴퓨터 정보 배너 (강조 카드)
+        self.top_card = build_top_banner_card(self, self.root)
 
         # 2. 탭 컨테이너
         self.notebook = ttk.Notebook(self.root)
@@ -127,7 +117,20 @@ class OneClickShareApp:
         self.log_area.see(tk.END)
         self.log_area.config(state=tk.DISABLED)
 
+    def _action_copy_ip(self) -> None:
+        """내 IP 주소를 클립보드에 복사합니다."""
+        if safe_copy_to_clipboard(self.root, self.local_ip):
+            self.log(f"[클립보드] 내 IP 주소 '{self.local_ip}'가 복사되었습니다. (상대방에게 전달하세요)")
+        else:
+            self.log("[오류] IP 복사 실패")
 
+    def _action_copy_share_path(self) -> None:
+        """내 공유 폴더 접속 경로(UNC)를 클립보드에 복사합니다."""
+        unc_path = build_unc_path(self.local_ip, DEFAULT_SHARE_NAME)
+        if safe_copy_to_clipboard(self.root, unc_path):
+            self.log(f"[클립보드] 접속 경로 '{unc_path}'가 복사되었습니다. (직원 PC 탐색기 주소창에 붙여넣기 가능)")
+        else:
+            self.log("[오류] 접속 경로 복사 실패")
 
     def _refresh_printers(self) -> None:
         """로컬 프린터 목록을 갱신합니다."""
@@ -193,18 +196,44 @@ class OneClickShareApp:
         self.root.after(0, update_ui)
 
     def _on_select_scanned_host(self, event) -> None:
-        """드롭다운에서 메인 PC를 선택했을 때 입력 필드에 자동 주입합니다."""
+        """드롭다운에서 메인 PC를 선택했을 때 입력 필드에 자동 주입하고 원격 프린터를 자동 감지합니다."""
         selected = self.scanned_host_combo.get()
         if selected and "(" in selected:
             ip_part = selected.split("(")[0].strip()
             self.txt_target_host.delete(0, tk.END)
             self.txt_target_host.insert(0, ip_part)
+            self._run_in_thread(lambda: self._fetch_remote_printers(ip_part))
+
+    def _fetch_remote_printers_from_input(self) -> None:
+        """현재 입력창의 메인 PC 주소로 원격 프린터를 검색합니다."""
+        host_ip = self.txt_target_host.get().strip()
+        if host_ip:
+            self._fetch_remote_printers(host_ip)
+
+    def _fetch_remote_printers(self, host_ip: str) -> None:
+        """원격 메인 PC에 공유된 프린터 목록을 조회하여 콤보박스에 자동 반영합니다."""
+        self.log(f"[프린터 탐색] 메인 PC({host_ip})의 공유 프린터 조회 중...")
+        printers = get_remote_shared_printers(host_ip)
+        
+        def update_printer_ui():
+            if printers:
+                self.client_printer_combo["values"] = printers
+                self.client_printer_combo.current(0)
+                self.log(f"[완료] 메인 PC 공유 프린터 {len(printers)}개 감지 완료 ({', '.join(printers)})")
+            else:
+                self.client_printer_combo["values"] = ["(공유된 프린터가 없습니다)"]
+                self.client_printer_combo.current(0)
+                self.log("[안내] 메인 PC에 공유된 프린터가 없습니다. (폴더만 연결 가능)")
+
+        self.root.after(0, update_printer_ui)
 
     def _action_connect_client(self) -> None:
         """직원 PC 원클릭 연결 동작"""
         target_host = self.txt_target_host.get().strip()
         share_name = self.txt_client_share_name.get().strip()
-        printer_name = self.txt_client_printer_name.get().strip()
+        
+        raw_printer = self.client_printer_combo.get().strip()
+        printer_name = "" if raw_printer.startswith("(") else raw_printer
 
         if not target_host:
             messagebox.showwarning("입력 필요", "메인 PC의 컴퓨터 이름 또는 IP 주소를 입력해 주세요.")

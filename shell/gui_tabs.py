@@ -17,7 +17,7 @@ def build_host_tab(app: Any, parent: ttk.Frame) -> None:
     """메인 PC (호스트) 탭 레이아웃을 생성합니다."""
     desc_lbl = ttk.Label(
         parent,
-        text="이 컴퓨터(메인 PC)의 프린터와 폴더를 다른 직원이 접근할 수 있도록 1초 만에 설정합니다.",
+        text=f"이 컴퓨터(메인 PC: {app.local_ip})의 프린터와 폴더를 다른 직원이 접근할 수 있도록 1초 만에 설정합니다.",
         foreground="#2563eb",
         style="Header.TLabel"
     )
@@ -109,10 +109,18 @@ def build_client_tab(app: Any, parent: ttk.Frame) -> None:
     app.txt_client_share_name.insert(0, DEFAULT_SHARE_NAME)
     app.txt_client_share_name.grid(row=1, column=1, padx=5, pady=4, sticky="we")
 
-    ttk.Label(c_frame, text="공유 프린터 이름:").grid(row=2, column=0, sticky="w", pady=4)
-    app.txt_client_printer_name = ttk.Entry(c_frame, width=35)
-    app.txt_client_printer_name.grid(row=2, column=1, padx=5, pady=4, sticky="we")
-    ttk.Label(c_frame, text="(모르면 빈칸으로 두셔도 됩니다)", foreground="#6b7280").grid(row=2, column=2, sticky="w")
+    ttk.Label(c_frame, text="공유 프린터:").grid(row=2, column=0, sticky="w", pady=4)
+    app.client_printer_combo = ttk.Combobox(c_frame, width=32)
+    app.client_printer_combo["values"] = ["(프린터 자동 검색 대기)"]
+    app.client_printer_combo.current(0)
+    app.client_printer_combo.grid(row=2, column=1, padx=5, pady=4, sticky="we")
+
+    btn_fetch_printers = ttk.Button(
+        c_frame,
+        text="프린터 검색",
+        command=lambda: app._run_in_thread(app._fetch_remote_printers_from_input)
+    )
+    btn_fetch_printers.grid(row=2, column=2, padx=5, pady=4, sticky="w")
 
     # 연결 옵션 체크박스
     opt_frame = ttk.Frame(parent, padding=5)

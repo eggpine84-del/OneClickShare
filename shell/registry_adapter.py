@@ -16,7 +16,10 @@ from config import (
     RPC_AUTHN_DEFAULT_VALUE,
     LANMAN_WORKSTATION_REG_PATH,
     LANMAN_INSECURE_GUEST_KEY,
-    LANMAN_INSECURE_GUEST_VALUE
+    LANMAN_INSECURE_GUEST_VALUE,
+    POINT_AND_PRINT_REG_PATH,
+    POINT_AND_PRINT_RESTRICT_KEY,
+    POINT_AND_PRINT_RESTRICT_VALUE
 )
 
 logger = logging.getLogger(__name__)
@@ -56,7 +59,8 @@ def run_as_admin() -> None:
 
 def apply_registry_fixes() -> Tuple[bool, List[str]]:
     """
-    윈도우 10/11의 인쇄 스풀러 RPC 인증 오류(0x0000011b) 및 게스트 인증 차단 레지스트리를 패치합니다.
+    윈도우 10/11의 인쇄 스풀러 RPC 인증 오류(0x0000011b), 게스트 인증 차단 및
+    PointAndPrint 드라이버 설치 관리자 제한(0x0000007c) 레지스트리를 패치합니다.
 
     Returns:
         (성공 여부 bool, 처리 로그 목록)
@@ -68,22 +72,31 @@ def apply_registry_fixes() -> Tuple[bool, List[str]]:
         key = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, RPC_AUTHN_REG_PATH)
         winreg.SetValueEx(key, RPC_AUTHN_KEY_NAME, 0, winreg.REG_DWORD, RPC_AUTHN_DEFAULT_VALUE)
         winreg.CloseKey(key)
-        logs.append(f"✅ 인쇄 RPC 레지스트리 패치 완료: {RPC_AUTHN_KEY_NAME}=0")
+        logs.append(f"[완료] 인쇄 RPC 레지스트리 패치: {RPC_AUTHN_KEY_NAME}=0")
     except Exception as e:
-        logs.append(f"⚠️ 인쇄 RPC 레지스트리 패치 실패: {e}")
+        logs.append(f"[주의] 인쇄 RPC 레지스트리 패치 실패: {e}")
 
     # 2. 안전하지 않은 게스트 로그온 허용 (암호 없는 공유 접속 허용)
     try:
         key = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, LANMAN_WORKSTATION_REG_PATH)
         winreg.SetValueEx(key, LANMAN_INSECURE_GUEST_KEY, 0, winreg.REG_DWORD, LANMAN_INSECURE_GUEST_VALUE)
         winreg.CloseKey(key)
-        logs.append(f"✅ 게스트 공유 접속 레지스트리 패치 완료: {LANMAN_INSECURE_GUEST_KEY}=1")
+        logs.append(f"[완료] 게스트 공유 접속 레지스트리 패치: {LANMAN_INSECURE_GUEST_KEY}=1")
     except Exception as e:
-        logs.append(f"⚠️ 게스트 공유 접속 레지스트리 패치 실패: {e}")
+        logs.append(f"[주의] 게스트 공유 접속 레지스트리 패치 실패: {e}")
+
+    # 3. Point and Print 드라이버 설치 관리자 제한 완화 (0x0000007c 오류 방지)
+    try:
+        key = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, POINT_AND_PRINT_REG_PATH)
+        winreg.SetValueEx(key, POINT_AND_PRINT_RESTRICT_KEY, 0, winreg.REG_DWORD, POINT_AND_PRINT_RESTRICT_VALUE)
+        winreg.CloseKey(key)
+        logs.append(f"[완료] PointAndPrint 드라이버 관리자 제한 해제: {POINT_AND_PRINT_RESTRICT_KEY}=0")
+    except Exception as e:
+        logs.append(f"[주의] PointAndPrint 레지스트리 패치 실패: {e}")
 
     # 스풀러 서비스 재시작으로 레지스트리 즉시 적용
     restart_cmd = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Restart-Service -Name \'Spooler\' -Force -ErrorAction SilentlyContinue"'
     subprocess.run(restart_cmd, shell=True, capture_output=True)
-    logs.append("✅ 인쇄 스풀러(Print Spooler) 서비스 재시작 완료")
+    logs.append("[완료] 인쇄 스풀러(Print Spooler) 서비스 재시작 완료")
 
     return True, logs
