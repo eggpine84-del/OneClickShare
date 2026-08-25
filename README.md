@@ -6,10 +6,11 @@
 ---
 
 ### [다운로드 링크]
+* **[OneClickShare.zip (안전 압축 파일 바로 다운로드 - 권장)](https://github.com/eggpine84-del/OneClickShare/raw/main/dist/OneClickShare.zip)**
 * **[OneClickShare.exe (실행 파일 바로 다운로드)](https://github.com/eggpine84-del/OneClickShare/raw/main/dist/OneClickShare.exe)**
 * **[사용설명서.txt 바로보기](https://github.com/eggpine84-del/OneClickShare/blob/main/dist/%EC%82%AC%EC%9A%A9%EC%84%A4%EB%AA%85%EC%84%9C.txt)**
 
-*(※ 별도 설치 없이 다운로드 후 더블 클릭하시면 바로 작동합니다.)*
+*(※ 별도 설치 없이 압축 해제 후 OneClickShare.exe를 실행하시면 바로 작동합니다.)*
 
 ---
 
