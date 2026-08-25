@@ -10,7 +10,9 @@ from core.checker import (
     generate_powershell_service_command,
     parse_printer_list_output,
     generate_subnet_ip_list,
-    is_printer_disabled
+    is_printer_disabled,
+    format_printer_label,
+    extract_actual_printer_name
 )
 
 
@@ -64,6 +66,19 @@ class TestCoreLogic(unittest.TestCase):
         self.assertTrue(is_printer_disabled("[선택 안 함]"))
         self.assertFalse(is_printer_disabled("Samsung ML-1640 Series"))
         self.assertFalse(is_printer_disabled("Canon G3000 series"))
+
+    def test_format_and_extract_printer_label(self):
+        # 1. 라벨 생성 포맷 검증
+        self.assertEqual(format_printer_label("Samsung ML-1640", True), "Samsung ML-1640 [공유 중]")
+        self.assertEqual(format_printer_label("Canon G3000", False), "Canon G3000")
+        self.assertEqual(format_printer_label("", True), "")
+
+        # 2. 실제 프린터명 역추출 검증
+        self.assertEqual(extract_actual_printer_name("Samsung ML-1640 [공유 중]"), "Samsung ML-1640")
+        self.assertEqual(extract_actual_printer_name("Canon G3000"), "Canon G3000")
+        self.assertEqual(extract_actual_printer_name("HP LaserJet [공유중]"), "HP LaserJet")
+        self.assertEqual(extract_actual_printer_name("(프린터 공유 안 함 - 폴더만 공유)"), "(프린터 공유 안 함 - 폴더만 공유)")
+        self.assertEqual(extract_actual_printer_name(None), "")
 
 
 if __name__ == "__main__":

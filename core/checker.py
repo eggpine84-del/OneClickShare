@@ -251,3 +251,41 @@ def is_printer_disabled(printer_name: Optional[str]) -> bool:
 
     return False
 
+
+def format_printer_label(name: str, is_shared: bool) -> str:
+    """
+    프린터 이름과 공유 상태를 받아 사용자 친화적인 한글 UI 라벨을 생성합니다.
+
+    Args:
+        name: 프린터 실제 이름
+        is_shared: 윈도우 네트워크 공유 여부 (True / False)
+
+    Returns:
+        화면 표시용 라벨 문자열 (예: 'Samsung ML-1640 [공유 중]' 또는 'Canon G3000')
+    """
+    clean_name = name.strip()
+    if not clean_name:
+        return ""
+    if is_shared:
+        return f"{clean_name} [공유 중]"
+    return clean_name
+
+
+def extract_actual_printer_name(display_label: Optional[str]) -> str:
+    """
+    UI 화면에 표시된 프린터 라벨에서 후미의 '[공유 중]' 뱃지를 제거하고 순수 프린터명을 추출합니다.
+
+    Args:
+        display_label: 드롭다운에서 선택된 문자열 (예: 'Samsung ML-1640 [공유 중]')
+
+    Returns:
+        실제 윈도우 프린터 명칭 (예: 'Samsung ML-1640')
+    """
+    if not display_label:
+        return ""
+    
+    clean_label = display_label.strip()
+    # 후미의 '[공유 중]' 또는 '[공유중]' 패턴 제거
+    actual_name = re.sub(r'\s*\[공유\s*중\]$', '', clean_label)
+    return actual_name.strip()
+

@@ -16,7 +16,13 @@ from config import (
     OPTION_NO_PRINTER_HOST,
     OPTION_NO_PRINTER_CLIENT
 )
-from core.checker import build_unc_path, is_valid_share_name, is_printer_disabled
+from core.checker import (
+    build_unc_path,
+    is_valid_share_name,
+    is_printer_disabled,
+    format_printer_label,
+    extract_actual_printer_name
+)
 from shell.system_adapter import (
     get_local_ip_and_hostname,
     set_network_profile_private,
@@ -137,10 +143,10 @@ class OneClickShareApp:
     def _refresh_printers(self) -> None:
         """로컬 프린터 목록을 갱신합니다."""
         printers = get_local_printers()
-        printer_names = [name for name, _ in printers]
-        options = [OPTION_NO_PRINTER_HOST] + printer_names
+        display_names = [format_printer_label(name, is_shared) for name, is_shared in printers]
+        options = [OPTION_NO_PRINTER_HOST] + display_names
         self.printer_combo["values"] = options
-        if printer_names:
+        if display_names:
             self.printer_combo.current(1)
         else:
             self.printer_combo.current(0)
@@ -168,10 +174,11 @@ class OneClickShareApp:
         f_ok, f_msg = create_folder_share(folder_path, share_name)
         self.log(f"   ➜ {f_msg}")
 
-        selected_printer = self.printer_combo.get()
-        if not is_printer_disabled(selected_printer):
-            self.log(f"5. 프린터 '{selected_printer}' 네트워크 공유 설정 중...")
-            p_ok, p_msg = share_printer(selected_printer)
+        selected_label = self.printer_combo.get()
+        if not is_printer_disabled(selected_label):
+            actual_printer = extract_actual_printer_name(selected_label)
+            self.log(f"5. 프린터 '{actual_printer}' 네트워크 공유 설정 중...")
+            p_ok, p_msg = share_printer(actual_printer)
             self.log(f"   ➜ {p_msg}")
         else:
             self.log("5. [프린터 제외] 프린터 공유를 건너뛰고 파일 공유 폴더만 단독 설정합니다.")
