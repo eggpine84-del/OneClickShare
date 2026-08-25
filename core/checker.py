@@ -140,10 +140,12 @@ def parse_printer_list_output(raw_output: str) -> List[Tuple[str, bool]]:
         if len(parts) >= 2:
             p_name = parts[0].strip()
             p_shared = parts[1].strip().lower() == "true"
-            if p_name:
+            if p_name and p_name.lower() not in ("true", "false"):
                 result.append((p_name, p_shared))
         elif len(parts) == 1 and parts[0].strip():
-            result.append((parts[0].strip(), False))
+            fallback_name = parts[0].strip()
+            if fallback_name.lower() not in ("true", "false"):
+                result.append((fallback_name, False))
             
     return result
 

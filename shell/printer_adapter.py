@@ -19,12 +19,11 @@ def execute_powershell(command: str) -> Tuple[bool, str]:
         return False, "명령어가 비어 있습니다."
 
     try:
-        full_command = f'powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "{command}"'
+        args = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command]
         result = subprocess.run(
-            full_command,
+            args,
             capture_output=True,
             text=True,
-            shell=True,
             timeout=30
         )
         if result.returncode == 0:
@@ -45,7 +44,7 @@ def get_local_printers() -> List[Tuple[str, bool]]:
     Returns:
         [(프린터 이름, 공유 여부), ...] 목록
     """
-    cmd = 'Get-Printer | ForEach-Object { "$($_.Name);;$($_.Shared)" }'
+    cmd = "Get-Printer | ForEach-Object { '{0};;{1}' -f $_.Name, $_.Shared }"
     success, output = execute_powershell(cmd)
     if not success or not output:
         return []
