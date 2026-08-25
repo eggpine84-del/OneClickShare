@@ -20,6 +20,10 @@ DEFAULT_NETWORK_DRIVE_LETTER: str = "Z:"
 # 바탕화면 바로가기 파일 이름
 DESKTOP_SHORTCUT_NAME: str = "회사 공용폴더.lnk"
 
+# 프린터 공유 제외(폴더 단독 모드) 기본 표시 상수
+OPTION_NO_PRINTER_HOST: str = "(프린터 공유 안 함 - 폴더만 공유)"
+OPTION_NO_PRINTER_CLIENT: str = "(프린터 연결 안 함 - 폴더만 연결)"
+
 # ==========================================
 # 2. 윈도우 필수 탐색 7대 서비스 목록
 # ==========================================

@@ -9,7 +9,8 @@ from core.checker import (
     generate_powershell_firewall_command,
     generate_powershell_service_command,
     parse_printer_list_output,
-    generate_subnet_ip_list
+    generate_subnet_ip_list,
+    is_printer_disabled
 )
 
 
@@ -52,6 +53,17 @@ class TestCoreLogic(unittest.TestCase):
         self.assertNotIn("192.168.0.15", ips)  # 자기 자신 제외 확인
         self.assertIn("192.168.0.1", ips)
         self.assertIn("192.168.0.254", ips)
+
+    def test_is_printer_disabled(self):
+        self.assertTrue(is_printer_disabled(None))
+        self.assertTrue(is_printer_disabled(""))
+        self.assertTrue(is_printer_disabled("   "))
+        self.assertTrue(is_printer_disabled("(프린터 공유 안 함 - 폴더만 공유)"))
+        self.assertTrue(is_printer_disabled("(프린터 연결 안 함 - 폴더만 연결)"))
+        self.assertTrue(is_printer_disabled("(설치된 프린터가 없습니다)"))
+        self.assertTrue(is_printer_disabled("[선택 안 함]"))
+        self.assertFalse(is_printer_disabled("Samsung ML-1640 Series"))
+        self.assertFalse(is_printer_disabled("Canon G3000 series"))
 
 
 if __name__ == "__main__":

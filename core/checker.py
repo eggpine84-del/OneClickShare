@@ -227,3 +227,27 @@ def filter_preferred_local_ip(ip_candidates: List[str]) -> str:
     # 우선순위 4: 유효한 첫 번째 IP
     return valid_ips[0]
 
+
+def is_printer_disabled(printer_name: Optional[str]) -> bool:
+    """
+    선택된 프린터 이름이 비활성화/제외/건너뛰기 대상인지 순수 판정합니다.
+
+    Args:
+        printer_name: 검사할 프린터 이름 (None, 빈 문자열, 또는 '(프린터 공유 안 함...)' 등)
+
+    Returns:
+        프린터 처리를 건너뛰어야 하면 True, 정상 공유 대상이면 False
+    """
+    if printer_name is None:
+        return True
+    
+    clean_name = printer_name.strip()
+    if not clean_name:
+        return True
+
+    # 괄호로 시작하는 Sentinel 안내 문구 예: '(프린터 공유 안 함...)', '(설치된 프린터가 없습니다)' 등
+    if clean_name.startswith("(") or clean_name.startswith("["):
+        return True
+
+    return False
+

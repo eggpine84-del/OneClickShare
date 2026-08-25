@@ -12,9 +12,11 @@ from config import (
     DEFAULT_SHARE_FOLDER_PATH,
     DEFAULT_SHARE_NAME,
     DEFAULT_NETWORK_DRIVE_LETTER,
-    DESKTOP_SHORTCUT_NAME
+    DESKTOP_SHORTCUT_NAME,
+    OPTION_NO_PRINTER_HOST,
+    OPTION_NO_PRINTER_CLIENT
 )
-from core.checker import build_unc_path, is_valid_share_name
+from core.checker import build_unc_path, is_valid_share_name, is_printer_disabled
 from shell.system_adapter import (
     get_local_ip_and_hostname,
     set_network_profile_private,
@@ -136,10 +138,12 @@ class OneClickShareApp:
         """로컬 프린터 목록을 갱신합니다."""
         printers = get_local_printers()
         printer_names = [name for name, _ in printers]
-        if not printer_names:
-            printer_names = ["(설치된 프린터가 없습니다)"]
-        self.printer_combo["values"] = printer_names
-        self.printer_combo.current(0)
+        options = [OPTION_NO_PRINTER_HOST] + printer_names
+        self.printer_combo["values"] = options
+        if printer_names:
+            self.printer_combo.current(1)
+        else:
+            self.printer_combo.current(0)
 
     def _action_setup_host(self) -> None:
         """메인 PC 원클릭 설정 동작"""
@@ -165,10 +169,12 @@ class OneClickShareApp:
         self.log(f"   ➜ {f_msg}")
 
         selected_printer = self.printer_combo.get()
-        if selected_printer and not selected_printer.startswith("("):
+        if not is_printer_disabled(selected_printer):
             self.log(f"5. 프린터 '{selected_printer}' 네트워크 공유 설정 중...")
             p_ok, p_msg = share_printer(selected_printer)
             self.log(f"   ➜ {p_msg}")
+        else:
+            self.log("5. [프린터 제외] 프린터 공유를 건너뛰고 파일 공유 폴더만 단독 설정합니다.")
 
         unc_folder = build_unc_path(self.hostname, share_name)
         self.log("--- [완료] 메인 PC 설정이 완료되었습니다 ---")
@@ -217,11 +223,11 @@ class OneClickShareApp:
         
         def update_printer_ui():
             if printers:
-                self.client_printer_combo["values"] = printers
-                self.client_printer_combo.current(0)
+                self.client_printer_combo["values"] = [OPTION_NO_PRINTER_CLIENT] + printers
+                self.client_printer_combo.current(1)
                 self.log(f"[완료] 메인 PC 공유 프린터 {len(printers)}개 감지 완료 ({', '.join(printers)})")
             else:
-                self.client_printer_combo["values"] = ["(공유된 프린터가 없습니다)"]
+                self.client_printer_combo["values"] = [OPTION_NO_PRINTER_CLIENT, "(공유된 프린터가 없습니다)"]
                 self.client_printer_combo.current(0)
                 self.log("[안내] 메인 PC에 공유된 프린터가 없습니다. (폴더만 연결 가능)")
 
@@ -233,7 +239,7 @@ class OneClickShareApp:
         share_name = self.txt_client_share_name.get().strip()
         
         raw_printer = self.client_printer_combo.get().strip()
-        printer_name = "" if raw_printer.startswith("(") else raw_printer
+        printer_disabled = is_printer_disabled(raw_printer)
 
         if not target_host:
             messagebox.showwarning("입력 필요", "메인 PC의 컴퓨터 이름 또는 IP 주소를 입력해 주세요.")
@@ -256,12 +262,12 @@ class OneClickShareApp:
             _, d_msg = map_network_drive(unc_folder)
             self.log(f"   ➜ {d_msg}")
 
-        if printer_name:
-            self.log(f"3. 공유 프린터('{printer_name}') 등록 시도 중...")
-            _, p_msg = connect_remote_printer(target_host, printer_name)
+        if not printer_disabled:
+            self.log(f"3. 공유 프린터('{raw_printer}') 등록 시도 중...")
+            _, p_msg = connect_remote_printer(target_host, raw_printer)
             self.log(f"   ➜ {p_msg}")
         else:
-            self.log("3. 지정된 프린터명이 없어 폴더 탐색기 실행...")
+            self.log("3. [프린터 제외] 프린터 연결을 건너뛰고 공용 폴더만 연결합니다...")
 
         os.system(f'explorer.exe "{unc_folder}"')
         self.log("--- [완료] 메인 PC 연결 작업이 완료되었습니다 ---")
