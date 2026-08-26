@@ -78,7 +78,8 @@ def execute_powershell(command: str) -> Tuple[bool, str]:
             capture_output=True,
             text=True,
             shell=True,
-            timeout=30
+            timeout=30,
+            creationflags=subprocess.CREATE_NO_WINDOW
         )
         if result.returncode == 0:
             return True, result.stdout.strip()

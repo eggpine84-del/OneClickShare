@@ -96,7 +96,7 @@ def apply_registry_fixes() -> Tuple[bool, List[str]]:
 
     # 스풀러 서비스 재시작으로 레지스트리 즉시 적용
     restart_cmd = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Restart-Service -Name \'Spooler\' -Force -ErrorAction SilentlyContinue"'
-    subprocess.run(restart_cmd, shell=True, capture_output=True)
+    subprocess.run(restart_cmd, shell=True, capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
     logs.append("[완료] 인쇄 스풀러(Print Spooler) 서비스 재시작 완료")
 
     return True, logs
