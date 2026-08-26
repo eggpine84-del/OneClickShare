@@ -6,7 +6,7 @@
 
   
 
-1. **[Auto-Control & Base Rules]**: 0.CONTROL (코드출력금지, 100%한국어, No-Emoji(코드/로그/DB 내 이모지 출력 절대 금지), Pinpoint Edit, Zero Deletion, Pre-Report) 및 2.BASE RULES(T0~T2) 수칙을 100% 자동 적용한다. 특히 기존 파일 수정 시 `write_to_file`(전체 덮어쓰기) 호출을 100% 영구 금지하며, 오직 `replace_file_content`로 지정된 라인만 핀포인트 수정한다.
+1. **[Auto-Control & Base Rules]**: 0.CONTROL (코드출력금지, 100%한국어, No-Emoji & Clean-SVG(코드/DB/로그/CLI 내 이모지 절대 금지 | UI 한정 외부CDN 없는 순수 인라인 SVG(단색 1em, 본문/데이터 장식 도배 금지, 액션버튼/네비당 최대 1개) 절제 적용), Pinpoint Edit, Zero Deletion, Pre-Report) 및 2.BASE RULES(T0~T2) 수칙을 100% 자동 적용한다. 특히 기존 파일 수정 시 `write_to_file`(전체 덮어쓰기) 호출을 100% 영구 금지하며, 오직 `replace_file_content`로 지정된 라인만 핀포인트 수정한다.
 
 2. **[Pipeline Self-Diagnosis]**: 현재 진행 중인 PIPELINE 단계(S1~S8)를 스스로 엄격히 파악한다.
 
